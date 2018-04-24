@@ -1,0 +1,82 @@
+---
+resources:
+#取得元リポジトリ
+- name: repo1
+  type: git
+  source:
+    uri: ((github-uri-a))
+    branch: master
+    private_key: ((github-privatekey))
+#出力先リポジトリ
+- name: repo2
+  type: git
+  source:
+    uri: ((github-uri-b))
+    branch: master
+    private_key: ((github-privatekey))
+    
+jobs:
+- name: job-master
+  plan:
+  - get: repo1
+    # repo1に変更があった場合自動実行
+    trigger: true
+  - get: repo2
+  # 取得したソースから成果物を作成するtask
+  - task: build
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source: {repository: busybox}
+      # 加工元リソース取り込み
+      inputs:
+      - name: repo1
+      # 成果物を配置するためのディレクトリ
+      outputs:
+      - name: out
+      run:
+        path: sh
+        args:
+        - -c
+        - |
+          # repo1で取得したソースをビルドし、outputディレクトリに配置する処理を記述
+          
+          # 作業ディレクトリへ移動
+          cd repo1
+
+          # ~ リソースを加工する処理などを記述 ~
+          
+          # 成果物をoutputディレクトリに配置
+　        cp ./file-1 ../out/file-1
+  # 成果物をgitにpushするtask
+  - task: push
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source: {repository: busybox}
+      inputs:
+      # 出力先リソース取り込み
+      - name: repo2
+      # 成果物取り込み
+      - name: out
+      run:
+        path: sh
+        args:
+        - -c
+        - |
+          # 成果物を出力先レポに配置
+          cp out/file-1 repo2/file-1
+          # 作業ディレクトリ移動
+          cd repo2
+          # pushするための一連の処理
+          ### 必要に応じてコメントアウトを外してください。また、おそらく認証でエラーが出る気がします。
+          ### 適宜認証情報を設定する処理を追加してください。ex):「.ssh/config」を設定する等かなと？
+          ### 昨日伺った感じだと知見者がいそうなので詳細は割愛します。お気軽に相談は受け付けてます:)
+          #git config --global user.name "YOUR NAME"
+          #git config --global user.email "YOUR EMAIL ADDRESS"
+          git add file-1
+          git commit -m "change file-1"
+          git push
+          
