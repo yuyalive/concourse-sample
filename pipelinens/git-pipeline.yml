@@ -47,7 +47,7 @@ jobs:
           # ~ リソースを加工する処理などを記述 ~
           
           # 成果物をoutputディレクトリに配置
-　        cp ./file-1 ../out/file-1
+          cp ./file-1 ../out/file-1
   # 成果物をgitにpushするtask
   - task: push
     config:
